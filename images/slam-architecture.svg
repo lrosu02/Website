@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 620" width="1180" height="620" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#b74e91"/>
+    </marker>
+    <marker id="al" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7d6fd0"/>
+    </marker>
+    <marker id="ab" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#8a7fb8"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="620" fill="#261c3e"/>
+  <text x="20" y="42" fill="#ffffff" font-size="30" font-weight="bold">Two tiers, one code path</text>
+  <text x="20" y="70" fill="#968eb2" font-size="19">Everything talks over ZeroMQ, so no component knows which machine its peers run on.</text>
+
+  <!-- ROVER -->
+  <rect x="20" y="100" width="370" height="440" rx="6" fill="#2f2350" stroke="#5e42a6" stroke-width="2"/>
+  <text x="44" y="136" fill="#ffffff" font-size="21" font-weight="bold">Rover</text>
+  <text x="44" y="160" fill="#b74e91" font-size="17">Raspberry Pi 4 &#183; asyncio, no ROS</text>
+
+  <rect x="44" y="180" width="322" height="58" rx="4" fill="#3b2c66"/>
+  <text x="60" y="205" fill="#ffffff" font-size="17" font-weight="bold">2D LiDAR (RPLIDAR class)</text>
+  <text x="60" y="227" fill="#a79ec6" font-size="15">USB serial &#183; the mapping + localization sensor</text>
+
+  <rect x="44" y="248" width="322" height="58" rx="4" fill="#3b2c66"/>
+  <text x="60" y="273" fill="#ffffff" font-size="17" font-weight="bold">CSI camera</text>
+  <text x="60" y="295" fill="#a79ec6" font-size="15">MJPEG passthrough &#183; video + low obstacles</text>
+
+  <rect x="44" y="316" width="322" height="58" rx="4" fill="#3b2c66"/>
+  <text x="60" y="341" fill="#ffffff" font-size="17" font-weight="bold">Motors + encoders</text>
+  <text x="60" y="363" fill="#a79ec6" font-size="15">Hiwonder I2C board &#183; closed-loop wheel speed</text>
+
+  <rect x="44" y="392" width="322" height="122" rx="4" fill="#4a2a52" stroke="#b74e91" stroke-width="1.5"/>
+  <text x="60" y="418" fill="#ffffff" font-size="17" font-weight="bold">Safety layer</text>
+  <text x="60" y="443" fill="#e0b8d4" font-size="15">300 ms deadman: no command, no motion</text>
+  <text x="60" y="466" fill="#e0b8d4" font-size="15">latching e-stop, acked over the control plane</text>
+  <text x="60" y="489" fill="#e0b8d4" font-size="15">speed and slew clamps, enforced on-board</text>
+  <text x="60" y="509" fill="#9b8fae" font-size="14" font-style="italic">cannot be starved by network or PC failure</text>
+
+  <!-- LINKS -->
+  <text x="466" y="128" fill="#968eb2" font-size="16" text-anchor="middle">Wi-Fi</text>
+
+  <line x1="396" y1="185" x2="536" y2="185" stroke="#b74e91" stroke-width="2.5" marker-end="url(#ar)"/>
+  <text x="466" y="172" fill="#b74e91" font-size="14" text-anchor="middle" font-weight="bold">5555 PUB</text>
+  <text x="466" y="205" fill="#a79ec6" font-size="13.5" text-anchor="middle">scans, video,</text>
+  <text x="466" y="222" fill="#a79ec6" font-size="13.5" text-anchor="middle">encoders, telemetry</text>
+
+  <line x1="536" y1="290" x2="396" y2="290" stroke="#7d6fd0" stroke-width="2.5" marker-end="url(#al)"/>
+  <text x="466" y="277" fill="#7d6fd0" font-size="14" text-anchor="middle" font-weight="bold">5556 SUB</text>
+  <text x="466" y="310" fill="#a79ec6" font-size="13.5" text-anchor="middle">velocity setpoints</text>
+  <text x="466" y="327" fill="#a79ec6" font-size="13.5" text-anchor="middle">10-20 Hz, loss-tolerant</text>
+
+  <line x1="404" y1="395" x2="536" y2="395" stroke="#8a7fb8" stroke-width="2.5" marker-end="url(#ab)"/>
+  <line x1="528" y1="415" x2="396" y2="415" stroke="#8a7fb8" stroke-width="2.5" marker-end="url(#ab)"/>
+  <text x="466" y="382" fill="#8a7fb8" font-size="14" text-anchor="middle" font-weight="bold">5557 REP</text>
+  <text x="466" y="440" fill="#a79ec6" font-size="13.5" text-anchor="middle">config, e-stop, time sync</text>
+  <text x="466" y="457" fill="#a79ec6" font-size="13.5" text-anchor="middle">acked, never dropped</text>
+
+  <!-- BASE STATION -->
+  <rect x="546" y="100" width="614" height="440" rx="6" fill="#2f2350" stroke="#5e42a6" stroke-width="2"/>
+  <text x="570" y="136" fill="#ffffff" font-size="21" font-weight="bold">Base station</text>
+  <text x="570" y="160" fill="#b74e91" font-size="17">Apple Silicon Mac &#183; native Python, no Docker</text>
+
+  <rect x="570" y="180" width="283" height="94" rx="4" fill="#3b2c66"/>
+  <text x="586" y="205" fill="#ffffff" font-size="17" font-weight="bold">Mapping + localization</text>
+  <text x="586" y="228" fill="#a79ec6" font-size="15">scan-matching odometry</text>
+  <text x="586" y="249" fill="#a79ec6" font-size="15">log-odds occupancy grid, 5 cm cells</text>
+  <text x="586" y="266" fill="#8e85ad" font-size="14" font-style="italic">behind a swappable SlamBackend</text>
+
+  <rect x="869" y="180" width="275" height="94" rx="4" fill="#3b2c66"/>
+  <text x="885" y="205" fill="#ffffff" font-size="17" font-weight="bold">Autonomy</text>
+  <text x="885" y="228" fill="#a79ec6" font-size="15">frontier explorer</text>
+  <text x="885" y="249" fill="#a79ec6" font-size="15">A* + pure pursuit</text>
+  <text x="885" y="266" fill="#8e85ad" font-size="14" font-style="italic">sensor-agnostic: it consumes a grid</text>
+
+  <rect x="570" y="288" width="283" height="94" rx="4" fill="#3b2c66"/>
+  <text x="586" y="313" fill="#ffffff" font-size="17" font-weight="bold">Vision</text>
+  <text x="586" y="336" fill="#a79ec6" font-size="15">floor segmentation from one camera</text>
+  <text x="586" y="357" fill="#a79ec6" font-size="15">catches obstacles under the LiDAR plane</text>
+  <text x="586" y="374" fill="#8e85ad" font-size="14" font-style="italic">can veto forward motion, never release it</text>
+
+  <rect x="869" y="288" width="275" height="94" rx="4" fill="#3b2c66"/>
+  <text x="885" y="313" fill="#ffffff" font-size="17" font-weight="bold">Reinforcement learning</text>
+  <text x="885" y="336" fill="#a79ec6" font-size="15">2D sim on real map geometry</text>
+  <text x="885" y="357" fill="#a79ec6" font-size="15">PPO training, policy runner</text>
+  <text x="885" y="374" fill="#8e85ad" font-size="14" font-style="italic">same observation in sim and on hardware</text>
+
+  <rect x="570" y="396" width="574" height="118" rx="4" fill="#3b2c66"/>
+  <text x="586" y="422" fill="#ffffff" font-size="17" font-weight="bold">Web app (FastAPI + browser UI)</text>
+  <text x="586" y="447" fill="#a79ec6" font-size="15">live video &#183; the map growing in real time &#183; keyboard teleop &#183; e-stop</text>
+  <text x="586" y="470" fill="#a79ec6" font-size="15">record a drive once, then replay it as a fake rover and iterate without hardware</text>
+  <text x="586" y="493" fill="#a79ec6" font-size="15">decision log naming which sensor stopped the rover, and why</text>
+
+  <text x="20" y="580" fill="#8e85ad" font-size="16">The Pi is deliberately dumb. Depth, SLAM, planning and training all run on the Mac, which is why Phase C is a move rather than a rewrite:</text>
+  <text x="20" y="602" fill="#8e85ad" font-size="16">the base-station tier lifts onto a Pi 5 riding the chassis, unchanged, and Wi-Fi leaves the control loop entirely.</text>
+</svg>
