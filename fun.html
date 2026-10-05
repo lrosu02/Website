@@ -1,0 +1,232 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Fun</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&family=IBM+Plex+Mono:wght@400&display=swap">
+		<style>
+			/* ------------------------------------------------------------------
+			   This page runs its own palette so it reads as a different part of
+			   the site: night blue ground and a warm alpenglow accent, instead of
+			   the purple and magenta everywhere else. Overrides main.css.
+			   ------------------------------------------------------------------ */
+			:root {
+				--night: #0c111b;
+				--slate: #151c29;
+				--line: rgba(255,255,255,0.12);
+				--mist: #8d98ab;
+				--glow: #f2a27e;
+			}
+			body { background: var(--night); }
+			#header { background-color: var(--slate); }
+			#header > nav > ul > li a.active { color: var(--glow); }
+			#footer.wrapper.alt { background-color: #080c14; }
+
+			h1.major:after {
+				background-image: linear-gradient(to right, #f2a27e, #c2615f) !important;
+			}
+			#main .button { border-color: rgba(242,162,126,0.45) !important; }
+			#main .button:hover { border-color: var(--glow) !important; }
+			#main hr { border-bottom-color: var(--line); }
+
+			#main .inner { max-width: 1100px; }
+			.lead { color: rgba(255,255,255,0.72); }
+
+			.entries { display: grid; gap: 80px; margin-top: 2.5em; }
+			.entry { display: grid; gap: 18px; }
+			.entry h2 {
+				margin: 0;
+				font-family: "Jost", "Futura", "Avenir Next", Arial, sans-serif;
+				font-weight: 300;
+				font-size: clamp(26px, 4.4vw, 40px);
+				letter-spacing: 0.3em;
+				text-transform: uppercase;
+				line-height: 1.15;
+			}
+			.entry h2 .alt {
+				font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+				font-size: 0.36em;
+				font-weight: 400;
+				letter-spacing: 0.06em;
+				text-transform: none;
+				color: var(--glow);
+				white-space: nowrap;
+				vertical-align: 0.95em;
+				margin-left: 0.5em;
+			}
+			.entry .where {
+				margin: -8px 0 0 0;
+				font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+				font-size: 12.5px;
+				letter-spacing: 0.08em;
+				color: var(--mist);
+			}
+			.entry .where span { white-space: nowrap; }
+			.entry .where span + span::before { content: " \00b7 "; opacity: 0.55; }
+			.entry p.note { margin: 0; max-width: 62ch; color: rgba(255,255,255,0.72); }
+
+			/* Film: poster facade, YouTube only loads on click. Drop this block
+			   entirely for an entry that has no video. */
+			.film {
+				position: relative; width: 100%; aspect-ratio: 16 / 9;
+				background: #05060a; border: 1px solid var(--line);
+				overflow: hidden; cursor: pointer;
+			}
+			.film img, .film iframe { display: block; width: 100%; height: 100%; border: 0; object-fit: cover; }
+			.film .play {
+				position: absolute; inset: 0; margin: auto;
+				width: 74px; height: 74px; min-width: 0; padding: 0; border-radius: 50%;
+				background: rgba(8,12,20,0.55); border: 1px solid rgba(255,255,255,0.65) !important;
+				color: #fff; font-size: 24px; line-height: 1; cursor: pointer;
+				display: flex; align-items: center; justify-content: center;
+				transition: background 0.2s ease, transform 0.2s ease;
+			}
+			.film:hover .play { background: rgba(242,162,126,0.85); transform: scale(1.06); }
+			.film .play:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+			.film .play::before { content: ""; border-left: 15px solid currentColor; border-top: 9px solid transparent; border-bottom: 9px solid transparent; margin-left: 4px; }
+
+			/* Photo strip */
+			.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+			.shots a { display: block; aspect-ratio: 3 / 2; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+			.shots img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease, opacity 0.3s ease; }
+			.shots a:hover img { transform: scale(1.04); opacity: 0.92; }
+
+			@media (max-width: 736px) {
+				.entries { gap: 56px; }
+				.entry h2 { letter-spacing: 0.2em; }
+				.shots { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+				.film .play { width: 58px; height: 58px; padding: 0; }
+			}
+		</style>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						<li><a href="fun.html" class="active">Fun</a></li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+
+							<h1 class="major">Fun</h1>
+
+							<p class="lead">Things I make when nobody is paying me to. Trips, films, and whatever
+							else is holding my attention. No clients, no brief, no deadline.</p>
+
+							<div class="entries">
+
+								<!-- ============================================================
+								     ENTRY TEMPLATE. To add something, copy one <article> block.
+								       1. Upload the film to YouTube.
+								       2. Put the 11-character video id in data-yt below.
+								          youtu.be/dQw4w9WgXcQ  ->  data-yt="dQw4w9WgXcQ"
+								       3. Drop a poster (1600x900) and photos into images/fun/.
+								     Nothing loads from YouTube until someone clicks play.
+								     The small figure after the title is the altitude. Keep it
+								     where it means something, delete that span where it does not.
+								     No video? Delete the whole .film block. No photos? Delete
+								     the .shots block. Entries lay out fine with either missing.
+								     ============================================================ -->
+
+								<article class="entry">
+									<h2>Lagazuoi <span class="alt">2,752 m</span></h2>
+									<p class="where"><span>Dolomites, Italy</span><span>January 2025</span></p>
+
+									<div class="film" data-yt="REPLACE_WITH_VIDEO_ID">
+										<img src="images/fun/lagazuoi-poster.jpg" alt="Rifugio Lagazuoi at blue hour, Dolomites" />
+										<button class="play" type="button" aria-label="Play the Lagazuoi film"></button>
+									</div>
+
+									<p class="note">Three days at Rifugio Lagazuoi, flying from blue hour through to
+									the lit hut fading into night. Cut to Vivaldi, Winter from The Four Seasons.</p>
+
+									<div class="shots">
+										<a href="images/fun/ph-1.jpg"><img src="images/fun/ph-1.jpg" alt="" loading="lazy" /></a>
+										<a href="images/fun/ph-2.jpg"><img src="images/fun/ph-2.jpg" alt="" loading="lazy" /></a>
+										<a href="images/fun/ph-3.jpg"><img src="images/fun/ph-3.jpg" alt="" loading="lazy" /></a>
+										<a href="images/fun/ph-4.jpg"><img src="images/fun/ph-4.jpg" alt="" loading="lazy" /></a>
+									</div>
+								</article>
+
+								<article class="entry">
+									<h2>Next one</h2>
+									<p class="where"><span>Where it was</span><span>Month Year</span></p>
+
+									<div class="film" data-yt="REPLACE_WITH_VIDEO_ID">
+										<img src="images/fun/ph-1.jpg" alt="" />
+										<button class="play" type="button" aria-label="Play"></button>
+									</div>
+
+									<p class="note">A sentence or two on what this was and what you were after.
+									Keep it short, the footage is doing the talking.</p>
+
+									<div class="shots">
+										<a href="images/fun/ph-2.jpg"><img src="images/fun/ph-2.jpg" alt="" loading="lazy" /></a>
+										<a href="images/fun/ph-3.jpg"><img src="images/fun/ph-3.jpg" alt="" loading="lazy" /></a>
+										<a href="images/fun/ph-4.jpg"><img src="images/fun/ph-4.jpg" alt="" loading="lazy" /></a>
+									</div>
+								</article>
+
+							</div>
+
+							<ul class="actions" style="margin-top:3em">
+								<li><a href="index.html" class="button">Back home</a></li>
+							</ul>
+
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+			<script>
+				// Click the poster to swap in the YouTube player. Nothing third-party loads before that.
+				document.querySelectorAll('.film').forEach(function (box) {
+					box.addEventListener('click', function () {
+						var id = box.getAttribute('data-yt');
+						if (!id || id === 'REPLACE_WITH_VIDEO_ID') return;
+						var f = document.createElement('iframe');
+						f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1';
+						f.title = box.querySelector('img').alt || 'Film';
+						f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+						f.allowFullscreen = true;
+						box.innerHTML = '';
+						box.appendChild(f);
+						box.style.cursor = 'default';
+					});
+				});
+			</script>
+
+	</body>
+</html>
