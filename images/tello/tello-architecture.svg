@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 700" width="1180" height="700" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="dn" markerWidth="9" markerHeight="9" refX="4.5" refY="8" orient="auto">
+      <path d="M0,0 L9,0 L4.5,9 z" fill="#8a7fb8"/>
+    </marker>
+  </defs>
+  <rect width="1180" height="700" fill="#261c3e"/>
+
+  <text x="20" y="42" fill="#ffffff" font-size="30" font-weight="bold">Every layer at its own speed</text>
+  <text x="20" y="70" fill="#968eb2" font-size="18">The LLM is never in the control loop. Solid blocks are built and flown; dashed blocks are designed, not built.</text>
+
+  <!-- rate column header -->
+  <text x="20" y="108" fill="#968eb2" font-size="14" letter-spacing="2">RATE</text>
+  <text x="170" y="108" fill="#968eb2" font-size="14" letter-spacing="2">LAYER</text>
+
+  <!-- 1. Planner (planned) -->
+  <text x="20" y="152" fill="#cc68a5" font-size="20" font-weight="bold">~0.1 Hz</text>
+  <text x="20" y="174" fill="#968eb2" font-size="14">asynchronous</text>
+  <rect x="170" y="122" width="830" height="66" rx="5" fill="none" stroke="#6c5a99" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="190" y="150" fill="#c9c1e0" font-size="18" font-weight="bold">Planner: Grok</text>
+  <text x="190" y="174" fill="#968eb2" font-size="15">reads a top-down map, a labelled 360° mosaic and a text state block; picks goals and names rooms</text>
+
+  <!-- 2. Navigator (planned) -->
+  <text x="20" y="232" fill="#cc68a5" font-size="20" font-weight="bold">1 to 5 Hz</text>
+  <rect x="170" y="202" width="830" height="66" rx="5" fill="none" stroke="#6c5a99" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="190" y="230" fill="#c9c1e0" font-size="18" font-weight="bold">Navigator and mapper</text>
+  <text x="190" y="254" fill="#968eb2" font-size="15">stop-and-go stations with 360° yaw sweeps, 2.5D occupancy grid, frontier explorer as the no-LLM fallback</text>
+
+  <!-- 3. Perception (planned) -->
+  <text x="20" y="312" fill="#cc68a5" font-size="20" font-weight="bold">20 Hz</text>
+  <text x="20" y="334" fill="#968eb2" font-size="14">recalibrated at 0.5 Hz</text>
+  <rect x="170" y="282" width="830" height="92" rx="5" fill="none" stroke="#6c5a99" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="190" y="310" fill="#c9c1e0" font-size="18" font-weight="bold">Perception: two depth models, one ruler</text>
+  <text x="190" y="334" fill="#968eb2" font-size="15">Depth Anything V2 Small, fast and unitless  +  Apple Depth Pro, slow and metric</text>
+  <text x="190" y="358" fill="#968eb2" font-size="15">a least-squares scale and shift fit turns the fast model into metres; ArUco markers reset pose drift</text>
+
+  <!-- 4. Safety (built, with planned reflex chip) -->
+  <text x="20" y="418" fill="#cc68a5" font-size="20" font-weight="bold">20 Hz</text>
+  <text x="20" y="440" fill="#968eb2" font-size="14">every command</text>
+  <rect x="170" y="388" width="830" height="100" rx="5" fill="#4a2a52" stroke="#b74e91" stroke-width="1.5"/>
+  <text x="190" y="416" fill="#ffffff" font-size="18" font-weight="bold">Safety envelope</text>
+  <text x="190" y="440" fill="#e0b8d4" font-size="15">battery floor, altitude clamp, link-loss watchdog, geofence, tumble cut, stick limits.</text>
+  <text x="190" y="462" fill="#e0b8d4" font-size="15">Pure functions, the densest tests in the repo. Vetoes anything above it.</text>
+  <rect x="770" y="402" width="214" height="72" rx="4" fill="none" stroke="#c98fb6" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text x="786" y="430" fill="#e0b8d4" font-size="15" font-weight="bold">Depth reflex</text>
+  <text x="786" y="452" fill="#c98fb6" font-size="13.5">Phase 2: brakes on</text>
+  <text x="786" y="468" fill="#c98fb6" font-size="13.5">predicted clearance</text>
+
+  <!-- 5. Link + video (built) -->
+  <text x="20" y="532" fill="#cc68a5" font-size="20" font-weight="bold">~29 fps</text>
+  <text x="20" y="554" fill="#968eb2" font-size="14">0.5 s glass to glass</text>
+  <rect x="170" y="502" width="830" height="80" rx="5" fill="#3b2c66" stroke="#5e42a6" stroke-width="1.5"/>
+  <text x="190" y="530" fill="#ffffff" font-size="18" font-weight="bold">Link, video, teleop, recorder</text>
+  <text x="190" y="554" fill="#a79ec6" font-size="15">UDP commands and telemetry, H.264 through ffmpeg, kill switch from either window,</text>
+  <text x="190" y="574" fill="#a79ec6" font-size="15">every flight recorded as video plus time-aligned telemetry for offline work</text>
+
+  <!-- 6. Drone -->
+  <rect x="170" y="600" width="830" height="44" rx="5" fill="#2f2350" stroke="#5e42a6" stroke-width="1"/>
+  <text x="190" y="628" fill="#a79ec6" font-size="16">Tello: a dumb airframe on its own Wi-Fi. No forward sensors. Everything above runs on an M1 Pro Mac.</text>
+
+  <!-- Phase bracket -->
+  <line x1="1020" y1="388" x2="1020" y2="644" stroke="#b74e91" stroke-width="2"/>
+  <line x1="1012" y1="388" x2="1020" y2="388" stroke="#b74e91" stroke-width="2"/>
+  <line x1="1012" y1="644" x2="1020" y2="644" stroke="#b74e91" stroke-width="2"/>
+  <text x="1034" y="506" fill="#ffffff" font-size="17" font-weight="bold">Phase 0</text>
+  <text x="1034" y="528" fill="#e0b8d4" font-size="15">built, tested,</text>
+  <text x="1034" y="548" fill="#e0b8d4" font-size="15">flown</text>
+
+  <line x1="1020" y1="122" x2="1020" y2="374" stroke="#6c5a99" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="1012" y1="122" x2="1020" y2="122" stroke="#6c5a99" stroke-width="1.5"/>
+  <line x1="1012" y1="374" x2="1020" y2="374" stroke="#6c5a99" stroke-width="1.5"/>
+  <text x="1034" y="240" fill="#c9c1e0" font-size="17" font-weight="bold">Phases 1-6</text>
+  <text x="1034" y="262" fill="#968eb2" font-size="15">designed,</text>
+  <text x="1034" y="282" fill="#968eb2" font-size="15">not built</text>
+
+  <text x="20" y="684" fill="#8e85ad" font-size="15">If a planner call is slow or fails, the navigator keeps its last goal and falls back to frontier exploration. Nothing waits on the model.</text>
+</svg>

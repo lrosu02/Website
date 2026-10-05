@@ -1,0 +1,193 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Tello Mapping Drone</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						<li><a href="TELLOpage.html" class="active">Tello Mapping Drone</a></li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+
+							<h1 class="major">Tello Mapping Drone</h1>
+
+							<p>A Ryze Tello that is meant to map an apartment on its own, with a language model deciding where
+							to look next. The drone itself stays a dumb radio airframe. Everything runs on a Mac, talking to the
+							Tello over its own Wi-Fi.</p>
+
+							<p>Status, stated up front: <strong>Phase 0 of 7 is built and flown.</strong> That is the radio
+							link, the safety envelope, live video, keyboard teleop with a kill switch, a flight recorder and a
+							preflight check, all validated on real hardware with 203 tests behind them. Perception, mapping and
+							the planner are designed in detail and not built yet. This page covers both and keeps them apart.</p>
+
+							<span class="image fit"><img src="images/tello/tello-hud.jpg" alt="Drone camera view of a sliding glass door at 60 cm, with a heads-up display showing battery 77 percent, altitude 60 cm, telemetry age 0.1 seconds, 29.2 fps video and a recording indicator" /></span>
+
+							<p><em>The project's own HUD, re-rendered over a frame recorded 30 seconds into a real flight, from
+							the telemetry logged at that instant. 60 cm up, battery 77%, telemetry 0.1 s old. It happens to be
+							looking at a glass door, which is exactly the surface the plan flags as a trap for monocular depth.</em></p>
+
+							<hr class="major" />
+
+							<h2>The design: every layer at its own speed</h2>
+
+							<p>The architecture starts from one rule: <strong>the language model never flies the drone.</strong>
+							It runs about once every ten seconds, asynchronously, and only ever picks goals and names rooms. A
+							navigator executes those goals, and a safety layer underneath can veto anything either of them asks
+							for. If a model call is slow or fails, nothing waits on it: the navigator keeps its last goal and
+							falls back to plain frontier exploration.</p>
+
+							<span class="image fit"><img src="images/tello/tello-architecture.svg" alt="Layered architecture: planner at about 0.1 Hz, navigator and mapper at 1 to 5 Hz, perception at 20 Hz, safety envelope and link at 20 Hz on every command. Safety and link are built and flown; the layers above are designed but not built." /></span>
+
+							<h3>Two depth models, one ruler</h3>
+
+							<p>The Tello has no forward sensors, so all depth has to come from its single camera, and neither
+							of the obvious models works alone. Depth Anything V2 Small runs at about 20 Hz but outputs
+							<em>relative</em> depth with no units: "1.4" could be a metre or a room. Apple's Depth Pro outputs
+							real metres but takes one to three seconds a frame. Drive a control loop from that, plus the video
+							latency, and the drone reacts several seconds after the world changed. That is not obstacle
+							avoidance, it is documenting a collision.</p>
+
+							<p>So both run. Relative depth differs from metric depth by very nearly a scale and a shift, so every
+							couple of seconds Depth Pro measures one frame in metres, a least-squares fit against the fast model
+							on that same frame solves for those two numbers, and the next forty fast frames convert to metres for
+							free. <strong>Metric depth at 20 Hz out of a 0.5 Hz model.</strong></p>
+
+							<p>Pose comes from ArUco markers taped to door frames rather than from SLAM. The drone maps
+							stop-and-go: fly to a station, hover, sweep 360° in yaw, move on. Hovering makes Depth Pro's slowness
+							free, yaw is the Tello's most repeatable motion, and a full sweep almost always catches a marker, so
+							drift resets at every station without any loop closure.</p>
+
+							<hr class="major" />
+
+							<h2>Phase 0: what real hardware found</h2>
+
+							<p>Three bugs turned up within an hour of the drone being switched on, and none of them would have
+							shown up without it:</p>
+
+							<ul>
+								<li><strong>32 bytes.</strong> <code>-probesize 32</code> gave ffmpeg thirty-two <em>bytes</em> to
+								find the H.264 headers. Replaced by declaring the format outright, so there is nothing to probe.</li>
+								<li><strong>The short read.</strong> An unbuffered pipe returns at most one pipe buffer per read,
+								64 KiB on macOS, against a 2 MiB frame. The first read of every frame was always short, and the
+								code treated short as end of stream. Video could never have worked, on any machine.</li>
+								<li><strong>Vanishing installs.</strong> The editable install kept disappearing. It was
+								sidestepped at the time and traced later: iCloud was evicting files from the Desktop folder the
+								checkout lived in. The README now says to keep it out of synced folders.</li>
+							</ul>
+
+							<p>What actually cracked the second one was a diagnostic, not a guess. A small tool split "no video"
+							into <em>is the drone sending</em> versus <em>can ffmpeg decode it</em>, and seeing 364 KiB/s
+							arriving killed the theory that macOS permissions were blocking it. Its reader happened to loop until a
+							frame was complete, which is the only reason it decoded frames the app could not, and that accident
+							isolated the bug. Diagnostics that split a problem in half beat guessing, and they are worth
+							writing.</p>
+
+							<h3>Getting video to work at all</h3>
+
+							<p>The next two days went on the video pipe, and most of the lessons were about measuring
+							instead of trusting folklore. The usual low-latency ffmpeg flags were the problem, not the fix: with
+							all three on the stream ran at 0.2 fps, with all three off at 26. Small UDP buffers looked like a
+							latency win and were the opposite, 2 MB gave 0.2 fps and 5 MB gave 27.8. And one setting that tested
+							fine once turned out to be a coin flip, decoding in about 40% of six-second windows, because whether
+							a keyframe landed in the first 100 KB was luck. The config the project runs now is the only one that
+							worked three times out of three across shuffled rounds.</p>
+
+							<span class="image fit"><img src="images/tello/tello-packetloss.jpg" alt="A recorded frame of a hallway floor where the bottom rows are smeared with green and red blocks from corrupted video slices" /></span>
+
+							<h3>Latency sets the speed limit</h3>
+
+							<p>Glass-to-glass latency was measured rather than assumed: a full-screen millisecond clock, the drone
+							pointed at the screen, and the HUD overlaying the live clock on the frame. One screenshot holds both
+							the delayed clock and the real one. The answer was <strong>about half a second at about 20 fps</strong>.</p>
+
+							<p>That number is the most important constraint on everything after it. The distance a pilot, human
+							or software, flies blind is ground speed times the sum of latency and reaction time. At 1 m/s that is roughly
+							0.8 m, which is most of the clearance in an apartment hallway. So the reflex layer will have to brake
+							on <em>predicted</em> clearance, not measured clearance, and the in-flight speed control matters more
+							than it first looked.</p>
+
+							<hr class="major" />
+
+							<h2>Flying it</h2>
+
+							<span class="image fit"><img src="images/tello/tello-flight.png" alt="Two charts sharing a time axis. Height: takeoff at 10 seconds, a hold at 60 centimetres inside a 40 to 130 centimetre envelope band, landing at 57 seconds. Battery: 79 percent falling to 70 percent." /></span>
+
+							<p>Every flight is recorded as the drone's own H.264, remuxed rather than re-encoded, plus
+							time-aligned telemetry, so perception work can run against a flight a hundred times without flying
+							it again. This one held 60 cm, inside the 40 to 130 cm envelope, which sits within the range where the
+							downward vision sensor is reliable. It used nine points of battery in 47 seconds airborne, which is crude given whole-percent
+							readings but lands near the plan's budget of 8 to 10 useful minutes a pack.</p>
+
+							<div class="box">
+								<h3>Safety, while there are no forward sensors</h3>
+								<p>Until the depth reflex exists, the software envelope <em>is</em> the safety system, which is why
+								it is pure, side-effect-free code with the densest tests in the repo: a battery floor at 20%, an
+								altitude clamp, a link-loss watchdog, a geofence, stick limits and a tumble cut. The spacebar kills
+								the motors from either the terminal or the video window. Sticks auto-zero 0.4 s after each
+								keypress, so if input stops for any reason, the drone stops. And the camera window renders after
+								the stick command is sent and switches itself off after three failures, because a dead window must
+								never become a dead drone.</p>
+								<p>One thing is still open and worth saying: on one flight the telemetry went 4.5 s stale and the
+								landing failsafe fired, for a reason not yet understood. A safety mechanism firing for reasons
+								you cannot explain is worth closing before anything autonomous is trusted to fly.</p>
+							</div>
+
+							<hr class="major" />
+
+							<h2>What comes next</h2>
+
+							<p>Phase 1 is a deliberate go/no-go gate. Run both depth models offline against recorded flights,
+							calibrate the camera, and find out whether monocular depth from the Tello's rolling-shutter camera
+							is accurate enough at 1 to 3 m. If it is not, that comes out with zero risk to the drone.</p>
+
+							<p>Worth saying plainly even though the language model is the headline: Phase 4, a frontier explorer
+							with no language model at all, is what actually maps the apartment. The planner in Phase 5 adds
+							semantics, recovery and visible reasoning on top of something that already flies itself, not
+							instead of it.</p>
+
+							<ul class="actions">
+								<li><a href="index.html" class="button">Back to projects</a></li>
+							</ul>
+
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
