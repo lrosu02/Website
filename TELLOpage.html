@@ -29,139 +29,165 @@
 
 							<h1 class="major">Tello Mapping Drone</h1>
 
-							<p>A Ryze Tello that is meant to map an apartment on its own, with a language model deciding where
-							to look next. The drone itself stays a dumb radio airframe. Everything runs on a Mac, talking to the
-							Tello over its own Wi-Fi.</p>
+							<p>A Ryze Tello that is meant to map an apartment on its own, with a language model choosing
+							where to look next. The drone itself is a dumb radio airframe: one forward camera, a downward
+							time-of-flight sensor, an IMU, and nothing that measures range ahead. Everything runs on a Mac.</p>
 
-							<p>Status, stated up front: <strong>Phase 0 of 7 is built and flown.</strong> That is the radio
-							link, the safety envelope, live video, keyboard teleop with a kill switch, a flight recorder and a
-							preflight check, all validated on real hardware with 203 tests behind them. Perception, mapping and
-							the planner are designed in detail and not built yet. This page covers both and keeps them apart.</p>
+							<p>Before it can map anything it has to know how far away things are, from a single camera.
+							That is what this stage was about. The interesting part is that the depth model the design
+							leaned on turned out to be wrong exactly where it matters, and the fix was geometry, not a
+							better model.</p>
 
-							<span class="image fit"><img src="images/tello/tello-hud.jpg" alt="Drone camera view of a sliding glass door at 60 cm, with a heads-up display showing battery 77 percent, altitude 60 cm, telemetry age 0.1 seconds, 29.2 fps video and a recording indicator" /></span>
+							<p>Status, stated up front: the radio link, safety envelope, teleop and flight recorder are
+							built and flown. The camera is calibrated, and ranging is built and scored against ground
+							truth on two real flights, but has not yet run live with the drone in the air. Navigation,
+							mapping and the planner are designed, not built.</p>
 
-							<p><em>The project's own HUD, re-rendered over a frame recorded 30 seconds into a real flight, from
-							the telemetry logged at that instant. 60 cm up, battery 77%, telemetry 0.1 s old. It happens to be
-							looking at a glass door, which is exactly the surface the plan flags as a trap for monocular depth.</em></p>
+							<span class="image fit"><img src="images/tello/tello-architecture.svg" alt="Layered architecture: planner at about 0.1 Hz and navigator at 1 to 5 Hz, both designed but not built; ranging from the floor at about 20 Hz, built and scored on real flights; safety envelope and link, built and flown." /></span>
 
-							<hr class="major" />
-
-							<h2>The design: every layer at its own speed</h2>
-
-							<p>The architecture starts from one rule: <strong>the language model never flies the drone.</strong>
-							It runs about once every ten seconds, asynchronously, and only ever picks goals and names rooms. A
-							navigator executes those goals, and a safety layer underneath can veto anything either of them asks
-							for. If a model call is slow or fails, nothing waits on it: the navigator keeps its last goal and
-							falls back to plain frontier exploration.</p>
-
-							<span class="image fit"><img src="images/tello/tello-architecture.svg" alt="Layered architecture: planner at about 0.1 Hz, navigator and mapper at 1 to 5 Hz, perception at 20 Hz, safety envelope and link at 20 Hz on every command. Safety and link are built and flown; the layers above are designed but not built." /></span>
-
-							<h3>Two depth models, one ruler</h3>
-
-							<p>The Tello has no forward sensors, so all depth has to come from its single camera, and neither
-							of the obvious models works alone. Depth Anything V2 Small runs at about 20 Hz but outputs
-							<em>relative</em> depth with no units: "1.4" could be a metre or a room. Apple's Depth Pro outputs
-							real metres but takes one to three seconds a frame. Drive a control loop from that, plus the video
-							latency, and the drone reacts several seconds after the world changed. That is not obstacle
-							avoidance, it is documenting a collision.</p>
-
-							<p>So both run. Relative depth differs from metric depth by very nearly a scale and a shift, so every
-							couple of seconds Depth Pro measures one frame in metres, a least-squares fit against the fast model
-							on that same frame solves for those two numbers, and the next forty fast frames convert to metres for
-							free. <strong>Metric depth at 20 Hz out of a 0.5 Hz model.</strong></p>
-
-							<p>Pose comes from ArUco markers taped to door frames rather than from SLAM. The drone maps
-							stop-and-go: fly to a station, hover, sweep 360° in yaw, move on. Hovering makes Depth Pro's slowness
-							free, yaw is the Tello's most repeatable motion, and a full sweep almost always catches a marker, so
-							drift resets at every station without any loop closure.</p>
+							<p>The language model never flies the drone. It runs about once every ten seconds and only
+							picks goals and names rooms. A navigator executes those goals, and a safety layer underneath
+							can veto anything either of them asks for. If a model call is slow or fails, nothing waits on
+							it.</p>
 
 							<hr class="major" />
 
-							<h2>Phase 0: what real hardware found</h2>
+							<h2>How it will map</h2>
 
-							<p>Three bugs turned up within an hour of the drone being switched on, and none of them would have
-							shown up without it:</p>
+							<p>Stop and go, never continuously: fly to a station, hover, sweep 360° in yaw, capture, move
+							on. Hovering makes slow perception free, yaw is the Tello's most repeatable motion, and a full
+							sweep almost always catches one of the ArUco markers taped to the door frames, which resets
+							pose drift at every station without any loop closure. Each station's depth goes into a 2.5D
+							occupancy grid, and a frontier explorer picks the next station.</p>
 
-							<ul>
-								<li><strong>32 bytes.</strong> <code>-probesize 32</code> gave ffmpeg thirty-two <em>bytes</em> to
-								find the H.264 headers. Replaced by declaring the format outright, so there is nothing to probe.</li>
-								<li><strong>The short read.</strong> An unbuffered pipe returns at most one pipe buffer per read,
-								64 KiB on macOS, against a 2 MiB frame. The first read of every frame was always short, and the
-								code treated short as end of stream. Video could never have worked, on any machine.</li>
-								<li><strong>Vanishing installs.</strong> The editable install kept disappearing. It was
-								sidestepped at the time and traced later: iCloud was evicting files from the Desktop folder the
-								checkout lived in. The README now says to keep it out of synced folders.</li>
-							</ul>
-
-							<p>What actually cracked the second one was a diagnostic, not a guess. A small tool split "no video"
-							into <em>is the drone sending</em> versus <em>can ffmpeg decode it</em>, and seeing 364 KiB/s
-							arriving killed the theory that macOS permissions were blocking it. Its reader happened to loop until a
-							frame was complete, which is the only reason it decoded frames the app could not, and that accident
-							isolated the bug. Diagnostics that split a problem in half beat guessing, and they are worth
-							writing.</p>
-
-							<h3>Getting video to work at all</h3>
-
-							<p>The next two days went on the video pipe, and most of the lessons were about measuring
-							instead of trusting folklore. The usual low-latency ffmpeg flags were the problem, not the fix: with
-							all three on the stream ran at 0.2 fps, with all three off at 26. Small UDP buffers looked like a
-							latency win and were the opposite, 2 MB gave 0.2 fps and 5 MB gave 27.8. And one setting that tested
-							fine once turned out to be a coin flip, decoding in about 40% of six-second windows, because whether
-							a keyframe landed in the first 100 KB was luck. The config the project runs now is the only one that
-							worked three times out of three across shuffled rounds.</p>
-
-							<span class="image fit"><img src="images/tello/tello-packetloss.jpg" alt="A recorded frame of a hallway floor where the bottom rows are smeared with green and red blocks from corrupted video slices" /></span>
-
-							<h3>Latency sets the speed limit</h3>
-
-							<p>Glass-to-glass latency was measured rather than assumed: a full-screen millisecond clock, the drone
-							pointed at the screen, and the HUD overlaying the live clock on the frame. One screenshot holds both
-							the delayed clock and the real one. The answer was <strong>about half a second at about 20 fps</strong>.</p>
-
-							<p>That number is the most important constraint on everything after it. The distance a pilot, human
-							or software, flies blind is ground speed times the sum of latency and reaction time. At 1 m/s that is roughly
-							0.8 m, which is most of the clearance in an apartment hallway. So the reflex layer will have to brake
-							on <em>predicted</em> clearance, not measured clearance, and the in-flight speed control matters more
-							than it first looked.</p>
+							<p>Every one of those steps needs metres from one camera. A depth model that outputs "1.4"
+							with no units could mean a metre or a room, and you cannot set a safety margin, size a
+							doorway or build a map in those numbers. Getting real metres is the rest of this page.</p>
 
 							<hr class="major" />
 
-							<h2>Flying it</h2>
+							<h2>Calibrating the camera</h2>
 
-							<span class="image fit"><img src="images/tello/tello-flight.png" alt="Two charts sharing a time axis. Height: takeoff at 10 seconds, a hold at 60 centimetres inside a 40 to 130 centimetre envelope band, landing at 57 seconds. Battery: 79 percent falling to 70 percent." /></span>
+							<p>Everything downstream needs the camera's real intrinsics, and the spec sheet's 82.6°
+							diagonal field of view is wrong. A printed 25 mm checkerboard, 74 views, solved to 0.93 px
+							RMS: a focal length of 905 px, which is 56° horizontal and 67° diagonal. The focal length moved
+							0.3% between 60 and 74 views, so more views would not change it.</p>
 
-							<p>Every flight is recorded as the drone's own H.264, remuxed rather than re-encoded, plus
-							time-aligned telemetry, so perception work can run against a flight a hundred times without flying
-							it again. This one held 60 cm, inside the 40 to 130 cm envelope, which sits within the range where the
-							downward vision sensor is reliable. It used nine points of battery in 47 seconds airborne, which is crude given whole-percent
-							readings but lands near the plan's budget of 8 to 10 useful minutes a pack.</p>
+							<span class="image fit"><img src="images/tello/tello-calibration.jpg" alt="Six frames from the drone's camera of a printed checkerboard taped to a wall at different angles and distances, with the detected corners marked" /></span>
+
+							<p>One trap on the way: the corner detector happily finds smaller grids inside a big board. A
+							search for a smaller pattern still matched 26 of 31 frames on the real board, so the tool now
+							detects the largest size present instead of trusting the first match.</p>
+
+							<h3>The board as ground truth</h3>
+
+							<p>The same checkerboard then became the ruler for everything else. Solving its pose in a
+							frame gives the true distance at every one of its corners, so any recording with the board in
+							view scores itself, with no tape measure. Checked against a tape, the board put the wall at
+							2.98 and 2.06 m where the tape said 3 and 2. The 1 m mark came out 15 cm off and is still
+							unexplained.</p>
+
+							<h3>Where the camera actually points</h3>
+
+							<p>The method below needs the camera's angle to the floor, and the IMU reports the body's,
+							not the camera's. On a stand with the motors off, the IMU's pitch turned out to run opposite to
+							the camera's, with the camera sitting about 12° below the IMU's zero. In flight it changed: the
+							camera's pitch holds still while the body tilts, by the look of it image stabilisation that only
+							runs with the motors on. Modelling camera pitch as a fixed angle gave 2.6% error on the first
+							flight, against 7.9% for following the IMU. The angle fitted there was 13.5°; measured
+							independently on the second flight, from boards close enough to trust their orientation, it
+							was 13.6°.</p>
+
+							<hr class="major" />
+
+							<h2>The ruler that was not</h2>
+
+							<p>The design called for two depth models with two jobs. Depth Anything V2 Small is fast,
+							31 ms a frame on the Mac, but has no units. Apple's Depth Pro outputs metres but takes 4.1 s a
+							frame. The plan was for Depth Pro to measure a frame in metres every few seconds, and a
+							two-number fit to convert the fast model's frames in between.</p>
+
+							<span class="image fit"><img src="images/tello/tello-depth-compare.jpg" alt="Two scenes shown three ways: the camera frame, Depth Pro's depth map and Depth Anything's depth map. With the wall at 3.00 m Depth Pro reads 2.65 m, 12 percent short; with the wall at 1.00 m it reads 1.46 m, 46 percent long." /></span>
+
+							<p>That only works if Depth Pro's metres are right, and under 2 m they are not. Scored against
+							the board at 90 positions, it compresses the range: near reads far and far reads near. Under
+							1 m it read 77% long on average, and it never reported anything closer than 0.94 m. That is
+							the dangerous direction for a drone, an obstacle at half a metre reported as a metre away. It
+							is not a scale error one factor could fix; the scatter changes frame to frame. The fusion
+							itself was faithful, tracking Depth Pro within a few percent. It just carried a wrong
+							number.</p>
+
+							<p>Depth Pro's metric scale rests entirely on its own guess of the focal length, which ranged
+							from 940 to 1229 px against the calibrated 905. Exposing that estimate and rescaling to the
+							calibrated value helped, from 118% long under 1 m to 77%, but did not fix it. Neither did
+							flying height: at flight height it still failed the 10% bar at 1 to 3 m. A third model,
+							Depth Anything's metric indoor variant, which I converted to CoreML myself, failed the same
+							way and worse. Two independently trained models failing alike points at the scene: a close,
+							plain wall gives a single camera almost no cue to scale.</p>
+
+							<hr class="major" />
+
+							<h2>Metres from the floor</h2>
+
+							<p>The floor is a ruler that is always there. With the camera's height from the downward
+							sensor, its tilt from the measurement above, and the calibrated intrinsics, every floor pixel
+							has a known distance by pure geometry. Fitting the fast model to those pixels, every frame,
+							puts the whole frame in metres, and since nothing is carried from frame to frame, the fast
+							model's habit of rescaling itself stops mattering.</p>
+
+							<span class="image fit"><img src="images/tello/tello-floor-growth.jpg" alt="Two frames from a test flight. At 2.08 m from the wall, lines on the floor mark 1.25, 1.5, 1.75 and 2 m, computed from height and camera tilt, and the board is 97 pixels wide. At 0.97 m the floor is out of view and the board is 209 pixels wide, 2.14 times larger." /></span>
+
+							<p>Where the floor is visible, it is accurate. On the second flight, which none of the
+							camera constants were tuned on, steady-flight readings at 1.5 to 3 m came out about 5% off on
+							average, the worst at 12%. On average they read about 4% short, most likely the gap between
+							the sensor window and the lens, which is still a 2 cm guess.</p>
+
+							<span class="image fit"><img src="images/tello/tello-accuracy.png" alt="Scatter of reported distance against true distance. Depth Pro's 90 points sit well above the diagonal under 1.5 m and never go below 0.94 m. The floor method's 15 points from the second flight sit just under the diagonal from 1.5 to 3 m, inside the 10 percent band." /></span>
+
+							<p>The limit is geometric. At 0.83 m up, the nearest floor the camera can see is about 1.2 m
+							ahead, so close to a wall there is no floor in the frame at all, which is exactly where the
+							distance matters most.</p>
+
+							<h3>Carrying it inward</h3>
+
+							<p>Three ways of carrying a distance closer were tested, and two failed. Carrying the floor's
+							scale onto later frames failed, because the fast model's own scale drifts as a wall fills the
+							view: its readings stuck near 2 m whatever the truth. Distance from the drone's own motion
+							failed too. The velocity telemetry turned out to be in decimetres per second, not centimetres
+							(the HUD's speed had been reading ten times low), and in whole units with a lag, which left
+							17% mean error in the distance travelled alone.</p>
+
+							<p>What worked is the simplest idea. Whatever is straight ahead looks bigger as you approach
+							it, and the distance shrinks by the same factor, so the last floor reading divided by how much
+							the middle of the image has grown gives the distance now. Started from the floor method's own
+							estimate, that held about 3.5% mean error down to 0.5 m, on both flights. Played through the live
+							code in real time against the second flight, it produced 21 readings a second, a median 51 ms
+							behind the frame, with a mean error of 3.7% and a 90th percentile of 6.7%.</p>
 
 							<div class="box">
-								<h3>Safety, while there are no forward sensors</h3>
-								<p>Until the depth reflex exists, the software envelope <em>is</em> the safety system, which is why
-								it is pure, side-effect-free code with the densest tests in the repo: a battery floor at 20%, an
-								altitude clamp, a link-loss watchdog, a geofence, stick limits and a tumble cut. The spacebar kills
-								the motors from either the terminal or the video window. Sticks auto-zero 0.4 s after each
-								keypress, so if input stops for any reason, the drone stops. And the camera window renders after
-								the stick command is sent and switches itself off after three failures, because a dead window must
-								never become a dead drone.</p>
-								<p>One thing is still open and worth saying: on one flight the telemetry went 4.5 s stale and the
-								landing failsafe fired, for a reason not yet understood. A safety mechanism firing for reasons
-								you cannot explain is worth closing before anything autonomous is trusted to fly.</p>
+								<h3>"No reading" is not "clear"</h3>
+								<p>Coverage is the weak spot. Under 0.5 m the tracked region overflows the frame, and a
+								blank wall gives the tracker nothing to follow. Between 0.5 and 1.5 m it read 81 of 138
+								frames. Restarting a lost track from its own last reading raised that to 102, and pushed
+								the 90th-percentile error from 2.7% to 32%, so it was reverted. A wrong number is worse
+								than none. The ranging says "no reading" with a reason, and whatever consumes it must treat
+								that as unknown, never as clear.</p>
 							</div>
 
 							<hr class="major" />
 
 							<h2>What comes next</h2>
 
-							<p>Phase 1 is a deliberate go/no-go gate. Run both depth models offline against recorded flights,
-							calibrate the camera, and find out whether monocular depth from the Tello's rolling-shutter camera
-							is accurate enough at 1 to 3 m. If it is not, that comes out with zero risk to the drone.</p>
+							<p>Every test so far had a checkerboard in view, which is ideal texture for the tracker. Next
+							is the same approach flown at a wall with ordinary features, then at a plain painted wall,
+							where the right answer is "lost the track", not a number. Then measuring the sensor-to-lens
+							offset behind the 4% bias. Then the depth reflex: brake on whatever is near and closing,
+							with margins sized from these measured error bands.</p>
 
-							<p>Worth saying plainly even though the language model is the headline: Phase 4, a frontier explorer
-							with no language model at all, is what actually maps the apartment. The planner in Phase 5 adds
-							semantics, recovery and visible reasoning on top of something that already flies itself, not
-							instead of it.</p>
+							<p>After that comes the map itself: marker-anchored pose, stop-and-go stations, a top-down
+							grid, and a frontier explorer with no language model at all. That explorer is what will
+							actually map the apartment. The planner adds room names, recovery and visible reasoning on
+							top of something that already flies itself, not instead of it.</p>
 
 							<ul class="actions">
 								<li><a href="index.html" class="button">Back to projects</a></li>
