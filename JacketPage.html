@@ -7,17 +7,16 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<style>.pair img { aspect-ratio: 1 / 1; object-fit: cover; }</style>
 	</head>
 	<body class="is-preload">
 
 		<!-- Header -->
 			<header id="header">
-				<!-- <a href="index.html" class="title">Hyperspace</a> -->
 				<nav>
 					<ul>
 						<li><a href="index.html">Home</a></li>
 						<li><a href="JacketPage.html" class="active">PER 25' Cooling Jacket</a></li>
-						<!-- <li><a href="elements.html">Elements</a></li> -->
 					</ul>
 				</nav>
 			</header>
@@ -28,12 +27,71 @@
 				<!-- Main -->
 					<section id="main" class="wrapper">
 						<div class="inner">
-							<h1 class="major">Purdue Electric Racing 2025 Cooling Jacket</h1>
-							<span class="image fit"><img src="images/JacketSlide1.png" alt="" /></span>
-							<span class="image fit"><img src="images/JacketSlide2.png" alt="" /></span>
-							<span class="image fit"><img src="images/JacketSlide3.png" alt="" /></span>
 
-							
+							<h1 class="major">Purdue Electric Racing 2025 Cooling Jacket</h1>
+
+							<p>The AMK hub motors on the 2025 car arrived without cooling jackets, so I designed one the team
+							could print in house: a single carbon-fibre PPS part with a helical water channel, sealed against the
+							motor face with an O-ring.</p>
+
+							<span class="image fit"><img src="images/jacket/jacket-final.jpg" alt="The finished black carbon-fibre PPS cooling jacket, embossed with AMK, mounted on an AMK hub motor and held in hand" /></span>
+
+							<p>It had to keep the motor under 120 °C, never leak, hold its shape at temperature, survive a 1 m
+							drop, meet the rules on grounding, pass at least the manufacturer's 4 L/min of coolant, and cost
+							under $100 a jacket.</p>
+
+							<hr class="major" />
+
+							<h2>Printing it</h2>
+
+							<p>Only two filaments met both the printer's limits and the thermal ones: PPA and PPS. The jacket
+							ended in PPS reinforced with carbon fibre, because the glass-filled grades are too brittle.</p>
+
+							<p>The harder constraint was the channel. Support material printed inside a closed water passage is
+							slow to remove and leaves a poor finish, so the geometry had to print in place with no internal
+							supports at all. That took three revisions: the first, in cheap material, to prove the seal and the
+							flow, and to learn that standard supports were not an option; the second, the first jacket to print
+							in place unsupported, with the seal fixed by a larger O-ring and more compression; the third, in
+							PPS-CF, with a better flow path.</p>
+
+							<div class="row gtr-uniform pair">
+								<div class="col-6 col-12-small"><span class="image fit"><img src="images/Jacket1.png" alt="Early white printed jacket showing the helical channel on its inner wall and brass barbed fittings" /></span></div>
+								<div class="col-6 col-12-small"><span class="image fit"><img src="images/Jacket2.png" alt="Early white printed jacket mounted on a test fixture with brass fittings and clear tubing" /></span></div>
+							</div>
+
+							<hr class="major" />
+
+							<h2>Testing it</h2>
+
+							<p>The bench rig puts a 1 kW heater inside an aluminium stand-in for the motor, wraps it in the
+							jacket, and runs water through a pump, a flow sensor and a radiator with a blower, with
+							thermocouples on either side of the jacket. A variac sets the heat and a power meter checks it.</p>
+
+							<span class="image fit"><img src="images/jacket/jacket-rig.jpg" alt="Annotated photo of the bench test rig: dummy motor with 1000 W heater, carbon-fibre PPS cooling jacket, thermocouples, power meter, variac, radiator and blower box" /></span>
+
+							<span class="image fit"><img src="images/jacket/jacket-results.jpg" alt="Left: thermal camera image of the jacket during the heat test, surface readings 36.3 to 38.3 degrees Celsius. Right: inlet and outlet thermocouple temperatures over about 650 seconds, rising from about 32 to a plateau near 37 and 39 degrees Celsius." /></span>
+
+							<p>At 6.2 and 10.2 L/min, both above the 4 L/min minimum, the water carried away 700 to 740 W and
+							warmed only 1.0 to 1.6 °C crossing the jacket. The aluminium core settled at 62 to 63 °C, and the
+							thermal camera puts the jacket's outer surface at 36 to 38 °C. The measured heat-transfer
+							coefficient came out close to three times the simple cylinder-in-crossflow estimate.</p>
+
+							<hr class="major" />
+
+							<h2>The radiator is the real limit</h2>
+
+							<span class="image fit"><img src="images/jacket/jacket-sim.png" alt="Simulated motor and water temperatures over time at fan speeds of 1000, 2000 and 3000 RPM: motors settle near 147, 116 and 91 degrees Celsius" /></span>
+
+							<p>A 1D thermal model, run at the sustained average power from the lap simulation, treats each motor
+							and the radiator as a node. Its clearest result is that the jacket is not the bottleneck. The motor
+							runs only about 10 °C above the water at every fan speed, while the fan alone moves it from about
+							147 °C at 1,000 RPM, well over the limit, to 116 °C at 2,000 and 91 °C at 3,000. Once the jacket
+							moves heat well, keeping the motor cool is a radiator and airflow problem.</p>
+
+							<ul class="actions">
+								<li><a href="index.html" class="button">Back to projects</a></li>
+							</ul>
+
 						</div>
 					</section>
 
@@ -43,7 +101,6 @@
 			<footer id="footer" class="wrapper alt">
 				<div class="inner">
 					<ul class="menu">
-						<!-- <li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li> -->
 					</ul>
 				</div>
 			</footer>
